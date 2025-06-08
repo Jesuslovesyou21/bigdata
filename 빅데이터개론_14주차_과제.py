@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1Bpkl273IH-LLALz5NPFK8y5hrD7q0yaG
 """
 
-# 📦 필수 라이브러리 임포트
+# 라이브러리 임포트
 import time
 import numpy as np
 from sklearn.datasets import fetch_20newsgroups
@@ -18,8 +18,8 @@ from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 from transformers import pipeline
 import torch
 
-# 📌 Step 1: 데이터 로드 및 전처리
-print("🔹 Loading 20 Newsgroups dataset...")
+# 데이터 로드 및 전처리
+print("Loading 20 Newsgroups dataset...")
 newsgroups_train = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
 newsgroups_test = fetch_20newsgroups(subset='test', remove=('headers', 'footers', 'quotes'))
 
@@ -30,33 +30,33 @@ X_test = vectorizer.transform(newsgroups_test.data)
 y_train = newsgroups_train.target
 y_test = newsgroups_test.target
 
-# 📌 Step 2: 모델 정의 및 학습
+# 세가지 모델 정의 및 학습
 
-# ✅ Naive Bayes
-print("🔹 Training Naive Bayes...")
+# Naive Bayes
+print("Training Naive Bayes...")
 nb_model = MultinomialNB()
 nb_model.fit(X_train, y_train)
 
-# ✅ SGDClassifier (Linear SVM)
-print("🔹 Training SGDClassifier...")
+# SGDClassifier
+print("Training SGDClassifier...")
 sgd_model = SGDClassifier(loss='hinge', max_iter=1000, tol=1e-3)
 sgd_model.fit(X_train, y_train)
 
-# ✅ BERT 파이프라인 로드
-print("🔹 Loading BERT pipeline...")
+# BERT
+print("Loading BERT pipeline...")
 device = 0 if torch.cuda.is_available() else -1
 classifier = pipeline("text-classification", model="distilbert-base-uncased-finetuned-sst-2-english", device=device)
 
-# 📌 Step 3: 예측
+# 예측
 
-# 🔸 Naive Bayes 예측
+# Naive Bayes 예측
 y_pred_nb = nb_model.predict(X_test)
 
-# 🔸 SGDClassifier 예측
+# SGDClassifier 예측
 y_pred_sgd = sgd_model.predict(X_test)
 
-# 🔸 BERT 예측 (200개 문장만 배치 처리)
-print("🔹 Running BERT on 200 samples...")
+# BERT 예측
+print("Running BERT on 200 samples...")
 sample_texts = newsgroups_test.data[:200]
 true_labels_bert = y_test[:200]
 
@@ -70,18 +70,17 @@ bert_outputs = classifier(
 
 bert_predictions = [0 if output['label'] == 'LABEL_0' else 1 for output in bert_outputs]
 
-# 📌 Step 4: 성능 평가 함수
+# 성능 평가
 def evaluate(name, y_true, y_pred):
     acc = accuracy_score(y_true, y_pred)
     precision, recall, f1, _ = precision_recall_fscore_support(y_true, y_pred, average='macro')
-    print(f"\n✅ {name} 성능")
+    print(f"\n {name} 성능")
     print(f"  Accuracy : {acc:.4f}")
     print(f"  Precision: {precision:.4f}")
     print(f"  Recall   : {recall:.4f}")
     print(f"  F1-score : {f1:.4f}")
     return acc, precision, recall, f1
 
-# 📌 Step 5: 성능 출력
 evaluate("Naive Bayes", y_test, y_pred_nb)
 evaluate("SGDClassifier", y_test, y_pred_sgd)
 evaluate("BERT (200 samples)", true_labels_bert, bert_predictions)
